@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reminder Assistant</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Reminder Assistant</h1>
+        <p class="sub">Create reminders here or via Telegram. Delivered when due.</p>
+      </header>
+
+      <section class="create">
+        <h2>New reminder</h2>
+        <form id="create-form">
+          <label>
+            What
+            <input
+              id="text"
+              name="text"
+              type="text"
+              required
+              maxlength="500"
+              placeholder="Call the dentist"
+              autocomplete="off"
+            />
+          </label>
+          <label>
+            When
+            <input id="dueAt" name="dueAt" type="datetime-local" required />
+          </label>
+          <button type="submit">Add reminder</button>
+        </form>
+        <p id="form-error" class="error" hidden></p>
+      </section>
+
+      <section class="list">
+        <div class="list-header">
+          <h2>Reminders</h2>
+          <div class="filters">
+            <button type="button" data-filter="pending" class="active">Upcoming</button>
+            <button type="button" data-filter="all">All</button>
+          </div>
+        </div>
+        <ul id="reminders"></ul>
+        <p id="empty" class="empty" hidden>No reminders yet.</p>
+      </section>
+    </main>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
