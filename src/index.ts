@@ -4,6 +4,7 @@ import express from "express";
 import { config } from "./config.js";
 import { initDb } from "./db.js";
 import { remindersRouter } from "./routes/reminders.js";
+import { visaRouter } from "./routes/visa.js";
 import { startScheduler } from "./scheduler.js";
 import { startBot } from "./telegram/bot.js";
 
@@ -17,6 +18,7 @@ const app = express();
 app.use(express.json());
 
 app.use("/api/reminders", remindersRouter);
+app.use("/api/visa", visaRouter);
 app.use(express.static(publicDir));
 
 app.get("/api/health", (_req, res) => {

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Visa checklist</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.css"
+    />
+  </head>
+  <body>
+    <main class="visa-page">
+      <header>
+        <p class="nav">
+          <a href="/">Reminders</a>
+          <span aria-hidden="true">·</span>
+          <a href="/visa.html" aria-current="page">Visa</a>
+        </p>
+        <h1>Visa checklist</h1>
+        <p class="sub">
+          Check off documents as you finish them. Drag bars on the plan to set
+          start and due dates — Telegram digests use those due dates.
+        </p>
+      </header>
+
+      <section class="create">
+        <h2>Add document</h2>
+        <form id="create-form">
+          <label>
+            Document
+            <input
+              id="title"
+              name="title"
+              type="text"
+              required
+              maxlength="500"
+              placeholder="Bank statement (last 6 months)"
+              autocomplete="off"
+            />
+          </label>
+          <div class="date-row">
+            <label>
+              Start date
+              <input id="startDate" name="startDate" type="date" />
+            </label>
+            <label>
+              Due date
+              <input id="dueDate" name="dueDate" type="date" />
+            </label>
+          </div>
+          <button type="submit">Add</button>
+        </form>
+        <p id="form-error" class="error" hidden></p>
+      </section>
+
+      <section class="list">
+        <div class="list-header">
+          <h2>Documents</h2>
+        </div>
+        <ul id="documents"></ul>
+        <p id="empty" class="empty" hidden>No documents yet.</p>
+      </section>
+
+      <section class="plan">
+        <div class="list-header">
+          <h2>Plan</h2>
+          <div class="filters" id="gantt-views">
+            <button type="button" data-view="Day">Day</button>
+            <button type="button" data-view="Week" class="active">Week</button>
+            <button type="button" data-view="Month">Month</button>
+          </div>
+        </div>
+        <p class="plan-hint">
+          Drag or resize a bar to set start and due dates. Undated items show a
+          temporary 7-day bar until you move them.
+        </p>
+        <div class="gantt-wrap">
+          <svg id="gantt"></svg>
+        </div>
+        <p id="gantt-empty" class="empty" hidden>Add documents to see the plan.</p>
+      </section>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>
+    <script src="/visa.js" type="module"></script>
+  </body>
+</html>

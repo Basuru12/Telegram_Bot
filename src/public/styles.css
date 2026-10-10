@@ -40,6 +40,26 @@ header h1 {
   letter-spacing: -0.02em;
 }
 
+.nav {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.nav a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.nav a:hover {
+  color: var(--text);
+}
+
+.nav a[aria-current="page"] {
+  color: var(--accent-hover);
+  font-weight: 600;
+}
+
 .sub {
   margin: 0 0 2rem;
   color: var(--muted);
@@ -146,13 +166,15 @@ button[type="submit"]:hover {
   background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
-#reminders {
+#reminders,
+#documents {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-#reminders li {
+#reminders li,
+#documents li {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -161,8 +183,85 @@ button[type="submit"]:hover {
   border-top: 1px solid var(--border);
 }
 
-#reminders li:first-child {
+#reminders li:first-child,
+#documents li:first-child {
   border-top: none;
+}
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+  flex: 1;
+  cursor: pointer;
+}
+
+.check-row input[type="checkbox"] {
+  width: auto;
+  margin-top: 0.2rem;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+#documents li.done .title {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.when.overdue {
+  color: var(--danger);
+}
+
+.when.due-today {
+  color: var(--accent-hover);
+}
+
+.visa-page {
+  max-width: 960px;
+}
+
+.date-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+
+@media (max-width: 560px) {
+  .date-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.plan-hint {
+  margin: 0 0 0.85rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.gantt-wrap {
+  overflow-x: auto;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.5rem;
+}
+
+.gantt-wrap .gantt .bar-wrapper .bar {
+  fill: #3d9a7a;
+}
+
+.gantt-wrap .gantt .bar-wrapper .bar-progress {
+  fill: #2d7a5f;
+}
+
+.gantt-wrap .gantt .bar-wrapper.bar-done .bar {
+  fill: #8b9aab;
+}
+
+.gantt-wrap .gantt .bar-label {
+  fill: #06140f;
+  font-weight: 600;
 }
 
 .meta {

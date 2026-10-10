@@ -16,6 +16,38 @@ export interface Reminder {
   error: string | null;
 }
 
+export interface VisaDocument {
+  id: number;
+  title: string;
+  start_date: string | null;
+  due_date: string | null;
+  done: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface VisaDocumentRow {
+  id: number;
+  title: string;
+  start_date: string | null;
+  due_date: string | null;
+  done: number;
+  created_at: string;
+  updated_at: string;
+}
+
+function mapVisaDocument(row: VisaDocumentRow): VisaDocument {
+  return {
+    id: row.id,
+    title: row.title,
+    start_date: row.start_date ?? null,
+    due_date: row.due_date,
+    done: row.done === 1,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
 let db: Database.Database;
 
 function migrateSourceCheck(database: Database.Database): void {
@@ -67,11 +99,36 @@ export function initDb(): Database.Database {
     );
     CREATE INDEX IF NOT EXISTS idx_reminders_due
       ON reminders(status, due_at);
+
+    CREATE TABLE IF NOT EXISTS visa_documents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      start_date TEXT,
+      due_date TEXT,
+      done INTEGER NOT NULL DEFAULT 0 CHECK(done IN (0, 1)),
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_visa_documents_done_due
+      ON visa_documents(done, due_date);
+
+    CREATE TABLE IF NOT EXISTS visa_digest_log (
+      digest_key TEXT PRIMARY KEY
+    );
   `);
 
   migrateSourceCheck(db);
+  migrateVisaStartDate(db);
 
   return db;
+}
+
+function migrateVisaStartDate(database: Database.Database): void {
+  const cols = database
+    .prepare(`PRAGMA table_info(visa_documents)`)
+    .all() as { name: string }[];
+  if (cols.some((c) => c.name === "start_date")) return;
+  database.exec(`ALTER TABLE visa_documents ADD COLUMN start_date TEXT`);
 }
 
 function getDb(): Database.Database {
@@ -177,4 +234,125 @@ export function markReminderFailed(id: number, error: string): void {
       `UPDATE reminders SET status = 'failed', error = ? WHERE id = ?`
     )
     .run(error.slice(0, 500), id);
+}
+
+export function getVisaDocumentById(id: number): VisaDocument | undefined {
+  const row = getDb()
+    .prepare(`SELECT * FROM visa_documents WHERE id = ?`)
+    .get(id) as VisaDocumentRow | undefined;
+  return row ? mapVisaDocument(row) : undefined;
+}
+
+export function listVisaDocuments(): VisaDocument[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT * FROM visa_documents
+       ORDER BY done ASC,
+         CASE WHEN start_date IS NULL THEN 1 ELSE 0 END,
+         start_date ASC,
+         CASE WHEN due_date IS NULL THEN 1 ELSE 0 END,
+         due_date ASC,
+         id ASC`
+    )
+    .all() as VisaDocumentRow[];
+  return rows.map(mapVisaDocument);
+}
+
+export function listUnfinishedVisaDocuments(): VisaDocument[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT * FROM visa_documents
+       WHERE done = 0
+       ORDER BY
+         CASE WHEN start_date IS NULL THEN 1 ELSE 0 END,
+         start_date ASC,
+         CASE WHEN due_date IS NULL THEN 1 ELSE 0 END,
+         due_date ASC,
+         id ASC`
+    )
+    .all() as VisaDocumentRow[];
+  return rows.map(mapVisaDocument);
+}
+
+export function createVisaDocument(input: {
+  title: string;
+  startDate?: string | null;
+  dueDate?: string | null;
+}): VisaDocument {
+  const now = new Date().toISOString();
+  const startDate = input.startDate?.trim() || null;
+  const dueDate = input.dueDate?.trim() || null;
+  const result = getDb()
+    .prepare(
+      `INSERT INTO visa_documents (title, start_date, due_date, done, created_at, updated_at)
+       VALUES (?, ?, ?, 0, ?, ?)`
+    )
+    .run(input.title.trim(), startDate, dueDate, now, now);
+
+  return getVisaDocumentById(Number(result.lastInsertRowid))!;
+}
+
+export function setVisaDocumentDone(
+  id: number,
+  done: boolean
+): VisaDocument | undefined {
+  const existing = getVisaDocumentById(id);
+  if (!existing) return undefined;
+
+  const now = new Date().toISOString();
+  getDb()
+    .prepare(
+      `UPDATE visa_documents SET done = ?, updated_at = ? WHERE id = ?`
+    )
+    .run(done ? 1 : 0, now, id);
+
+  return getVisaDocumentById(id);
+}
+
+export function updateVisaDocumentDates(
+  id: number,
+  input: { startDate: string | null; dueDate: string | null }
+): VisaDocument | undefined {
+  const existing = getVisaDocumentById(id);
+  if (!existing) return undefined;
+
+  const startDate = input.startDate?.trim() || null;
+  const dueDate = input.dueDate?.trim() || null;
+
+  if (startDate && dueDate && startDate > dueDate) {
+    throw new Error("start_date must be on or before due_date");
+  }
+
+  const now = new Date().toISOString();
+  getDb()
+    .prepare(
+      `UPDATE visa_documents
+       SET start_date = ?, due_date = ?, updated_at = ?
+       WHERE id = ?`
+    )
+    .run(startDate, dueDate, now, id);
+
+  return getVisaDocumentById(id);
+}
+
+export function deleteVisaDocument(id: number): boolean {
+  const result = getDb()
+    .prepare(`DELETE FROM visa_documents WHERE id = ?`)
+    .run(id);
+  return result.changes > 0;
+}
+
+export function wasVisaDigestSent(digestKey: string): boolean {
+  const row = getDb()
+    .prepare(`SELECT 1 AS ok FROM visa_digest_log WHERE digest_key = ?`)
+    .get(digestKey) as { ok: number } | undefined;
+  return Boolean(row);
+}
+
+export function markVisaDigestSent(digestKey: string): void {
+  getDb()
+    .prepare(
+      `INSERT OR IGNORE INTO visa_digest_log (digest_key) VALUES (?)`
+    )
+    .run(digestKey);
 }

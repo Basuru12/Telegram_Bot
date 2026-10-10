@@ -13,10 +13,35 @@ function optional(name: string): string | undefined {
   return value || undefined;
 }
 
+const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+function parseVisaDigestTimes(): string[] {
+  const raw = process.env.VISA_DIGEST_TIMES?.trim() || "09:00";
+  const times = [
+    ...new Set(
+      raw
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean)
+    ),
+  ];
+
+  for (const t of times) {
+    if (!TIME_RE.test(t)) {
+      throw new Error(
+        `Invalid VISA_DIGEST_TIMES entry "${t}" (expected HH:mm, comma-separated)`
+      );
+    }
+  }
+
+  return times.length > 0 ? times : ["09:00"];
+}
+
 export const config = {
   port: Number(process.env.PORT ?? 3000),
   databasePath: process.env.DATABASE_PATH ?? "./data/reminders.db",
   tz: process.env.TZ ?? "Asia/Kolkata",
+  visaDigestTimes: parseVisaDigestTimes(),
   telegram: {
     token: optional("TELEGRAM_BOT_TOKEN"),
   },

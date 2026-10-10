@@ -6,7 +6,9 @@ Personal reminder assistant that talks over **Telegram** (Bot API via grammY lon
 
 - Create / list / cancel reminders by messaging the bot
 - Same actions via a local web UI at `http://localhost:3000`
-- Background scheduler (every 60s) sends due reminders
+- Temporary **visa checklist** at `http://localhost:3000/visa.html` (manual checkboxes)
+- Daily Telegram digest of unfinished visa docs (default 09:00 in `TZ`)
+- Background scheduler (every 60s) sends due reminders and visa digests
 - Single-user allowlist via `ALLOWED_TELEGRAM_CHAT_ID`
 
 ## Quick start
@@ -28,6 +30,7 @@ Open http://localhost:3000 — the web UI works even before Telegram is configur
 | `TZ` | no | Default `Asia/Kolkata` |
 | `TELEGRAM_BOT_TOKEN` | for Telegram | Token from [@BotFather](https://t.me/BotFather) |
 | `ALLOWED_TELEGRAM_CHAT_ID` | for delivery | Your numeric Telegram chat id |
+| `VISA_DIGEST_TIMES` | no | Comma-separated `HH:mm` in `TZ`; default `09:00` |
 
 ## Telegram setup
 
@@ -50,12 +53,20 @@ No public webhook or tunnel is required — the bot uses long polling.
 | `cancel 3` | Cancel by id |
 | `help` / `/start` | Usage |
 
+## Visa checklist
+
+Open `/visa.html` to add documents, set optional due dates, and check them off. At each `VISA_DIGEST_TIMES` slot, the scheduler messages your Telegram chat with unfinished items (skipped if the list is empty or all done). The app must be running at those times.
+
 ## API
 
 - `GET /api/reminders` — all (recent)
 - `GET /api/reminders?status=pending` — upcoming
 - `POST /api/reminders` — `{ "text": "...", "dueAt": "2026-09-09T15:30" }` (wall clock in `TZ`)
 - `POST /api/reminders/:id/cancel`
+- `GET /api/visa` — visa documents (open first)
+- `POST /api/visa` — `{ "title": "...", "dueDate": "2026-04-15" }` (`dueDate` optional)
+- `PATCH /api/visa/:id` — `{ "done": true }`
+- `DELETE /api/visa/:id`
 - `GET /api/health`
 
 ## Scripts
