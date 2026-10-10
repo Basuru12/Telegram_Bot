@@ -60,20 +60,27 @@ async function maybeSendVisaDigest(chatId: string): Promise<void> {
   }
 
   const unfinished = listUnfinishedVisaDocuments();
-  if (unfinished.length === 0) {
+  const active = unfinished.filter(
+    (d) =>
+      d.start_date &&
+      d.due_date &&
+      d.start_date <= todayKey &&
+      todayKey <= d.due_date
+  );
+  if (active.length === 0) {
     markVisaDigestSent(digestKey);
-    console.log(`Visa digest ${digestKey}: nothing open, skipped`);
+    console.log(`Visa digest ${digestKey}: nothing active, skipped`);
     return;
   }
 
   try {
     await sendTextMessage(
       chatId,
-      buildVisaDigestMessage(unfinished, todayKey)
+      buildVisaDigestMessage(active, todayKey)
     );
     markVisaDigestSent(digestKey);
     console.log(
-      `Sent visa digest ${digestKey} (${unfinished.length} open)`
+      `Sent visa digest ${digestKey} (${active.length} active)`
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
