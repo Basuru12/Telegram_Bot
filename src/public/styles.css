@@ -264,6 +264,118 @@ button[type="submit"]:hover {
   font-weight: 600;
 }
 
+.weekday-field {
+  margin: 0 0 1rem;
+  padding: 0;
+  border: none;
+}
+
+.weekday-field legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.weekday-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.weekday-toggles label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.weekday-toggles input {
+  width: auto;
+  accent-color: var(--accent);
+}
+
+.time-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.time-add-row button,
+#save-schedule-btn,
+.secondary-btn {
+  padding: 0.65rem 1.15rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #06140f;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.time-add-row button:hover,
+#save-schedule-btn:hover {
+  background: var(--accent-hover);
+}
+
+.schedule-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.secondary-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.secondary-btn:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.secondary-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.time-chips {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.time-chips li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.time-chips li:first-child {
+  border-top: none;
+}
+
+.schedule-status {
+  margin: 0.75rem 0 0;
+  color: var(--accent-hover);
+  font-size: 0.9rem;
+}
+
 .meta {
   min-width: 0;
 }

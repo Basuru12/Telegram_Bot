@@ -7,6 +7,14 @@ const listEl = document.getElementById("documents");
 const emptyEl = document.getElementById("empty");
 const ganttEmpty = document.getElementById("gantt-empty");
 const ganttViews = document.getElementById("gantt-views");
+const weekdayToggles = document.getElementById("weekday-toggles");
+const scheduleTimeInput = document.getElementById("schedule-time");
+const addTimeBtn = document.getElementById("add-time-btn");
+const scheduleTimesEl = document.getElementById("schedule-times");
+const saveScheduleBtn = document.getElementById("save-schedule-btn");
+const testDigestBtn = document.getElementById("test-digest-btn");
+const scheduleStatus = document.getElementById("schedule-status");
+const scheduleError = document.getElementById("schedule-error");
 
 /** @type {any} */
 let gantt = null;
@@ -14,6 +22,8 @@ let currentView = "Week";
 /** @type {any[]} */
 let cachedDocs = [];
 let refreshing = false;
+/** @type {string[]} */
+let scheduleTimes = [];
 
 function todayKey() {
   const d = new Date();
@@ -271,4 +281,128 @@ ganttViews.addEventListener("click", (e) => {
   }
 });
 
+function normalizeTimeValue(raw) {
+  const value = String(raw || "").trim();
+  if (/^\d{2}:\d{2}$/.test(value)) return value;
+  if (/^\d{2}:\d{2}:\d{2}$/.test(value)) return value.slice(0, 5);
+  return null;
+}
+
+function renderScheduleTimes() {
+  scheduleTimesEl.innerHTML = "";
+  for (const time of scheduleTimes) {
+    const li = document.createElement("li");
+    const label = document.createElement("span");
+    label.textContent = time;
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "cancel-btn";
+    remove.textContent = "Remove";
+    remove.addEventListener("click", () => {
+      scheduleTimes = scheduleTimes.filter((t) => t !== time);
+      renderScheduleTimes();
+    });
+    li.append(label, remove);
+    scheduleTimesEl.append(li);
+  }
+}
+
+function applyScheduleToForm(schedule) {
+  const daySet = new Set(schedule.days.map(Number));
+  for (const input of weekdayToggles.querySelectorAll('input[type="checkbox"]')) {
+    input.checked = daySet.has(Number(input.value));
+  }
+  scheduleTimes = [...schedule.times].sort();
+  renderScheduleTimes();
+}
+
+async function loadSchedule() {
+  scheduleError.hidden = true;
+  scheduleStatus.hidden = true;
+  const res = await fetch("/api/visa/schedule");
+  if (!res.ok) {
+    scheduleError.textContent = "Could not load schedule";
+    scheduleError.hidden = false;
+    return;
+  }
+  applyScheduleToForm(await res.json());
+}
+
+addTimeBtn.addEventListener("click", () => {
+  scheduleError.hidden = true;
+  const time = normalizeTimeValue(scheduleTimeInput.value);
+  if (!time) {
+    scheduleError.textContent = "Pick a valid time";
+    scheduleError.hidden = false;
+    return;
+  }
+  if (!scheduleTimes.includes(time)) {
+    scheduleTimes.push(time);
+    scheduleTimes.sort();
+    renderScheduleTimes();
+  }
+  scheduleTimeInput.value = "";
+});
+
+saveScheduleBtn.addEventListener("click", async () => {
+  scheduleError.hidden = true;
+  scheduleStatus.hidden = true;
+
+  const days = [
+    ...weekdayToggles.querySelectorAll('input[type="checkbox"]:checked'),
+  ].map((input) => Number(input.value));
+
+  if (days.length === 0) {
+    scheduleError.textContent = "Select at least one day";
+    scheduleError.hidden = false;
+    return;
+  }
+  if (scheduleTimes.length === 0) {
+    scheduleError.textContent = "Add at least one time";
+    scheduleError.hidden = false;
+    return;
+  }
+
+  const res = await fetch("/api/visa/schedule", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ days, times: scheduleTimes }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    scheduleError.textContent = data.error || "Could not save schedule";
+    scheduleError.hidden = false;
+    return;
+  }
+
+  applyScheduleToForm(await res.json());
+  scheduleStatus.textContent = "Schedule saved.";
+  scheduleStatus.hidden = false;
+});
+
+testDigestBtn.addEventListener("click", async () => {
+  scheduleError.hidden = true;
+  scheduleStatus.hidden = true;
+  testDigestBtn.disabled = true;
+  try {
+    const res = await fetch("/api/visa/schedule/test", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      scheduleError.textContent =
+        data.error || "Could not send test reminder";
+      scheduleError.hidden = false;
+      return;
+    }
+    scheduleStatus.textContent =
+      data.count > 0
+        ? `Test sent (${data.count} active doc${data.count === 1 ? "" : "s"}). Check Telegram.`
+        : "Test sent (no documents active today). Check Telegram.";
+    scheduleStatus.hidden = false;
+  } finally {
+    testDigestBtn.disabled = false;
+  }
+});
+
 void loadDocuments();
+void loadSchedule();

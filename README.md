@@ -7,7 +7,7 @@ Personal reminder assistant that talks over **Telegram** (Bot API via grammY lon
 - Create / list / cancel reminders by messaging the bot
 - Same actions via a local web UI at `http://localhost:3000`
 - Temporary **visa checklist** at `http://localhost:3000/visa.html` (manual checkboxes)
-- Daily Telegram digest of unfinished visa docs (default 09:00 in `TZ`)
+- Telegram digests for **active** visa docs; weekdays + times set on `/visa.html`
 - Background scheduler (every 60s) sends due reminders and visa digests
 - Single-user allowlist via `ALLOWED_TELEGRAM_CHAT_ID`
 
@@ -30,7 +30,7 @@ Open http://localhost:3000 — the web UI works even before Telegram is configur
 | `TZ` | no | Default `Asia/Kolkata` |
 | `TELEGRAM_BOT_TOKEN` | for Telegram | Token from [@BotFather](https://t.me/BotFather) |
 | `ALLOWED_TELEGRAM_CHAT_ID` | for delivery | Your numeric Telegram chat id |
-| `VISA_DIGEST_TIMES` | no | Comma-separated `HH:mm` in `TZ`; default `09:00` |
+| `VISA_DIGEST_TIMES` | no | Bootstrap `HH:mm` list until schedule is saved in the UI; default `09:00` |
 
 ## Telegram setup
 
@@ -55,7 +55,7 @@ No public webhook or tunnel is required — the bot uses long polling.
 
 ## Visa checklist
 
-Open `/visa.html` to add documents, set optional due dates, and check them off. At each `VISA_DIGEST_TIMES` slot, the scheduler messages your Telegram chat with unfinished items (skipped if the list is empty or all done). The app must be running at those times.
+Open `/visa.html` to add documents, set start/due dates on the Gantt, and check them off. Use the **Reminders** section to pick weekdays and times for Telegram digests. Digests only include unfinished docs whose window includes today. Until you save a schedule in the UI, times default from `VISA_DIGEST_TIMES` (all days). The app must be running at those times.
 
 ## API
 
@@ -64,9 +64,11 @@ Open `/visa.html` to add documents, set optional due dates, and check them off. 
 - `POST /api/reminders` — `{ "text": "...", "dueAt": "2026-09-09T15:30" }` (wall clock in `TZ`)
 - `POST /api/reminders/:id/cancel`
 - `GET /api/visa` — visa documents (open first)
-- `POST /api/visa` — `{ "title": "...", "dueDate": "2026-04-15" }` (`dueDate` optional)
-- `PATCH /api/visa/:id` — `{ "done": true }`
+- `POST /api/visa` — `{ "title": "...", "startDate?", "dueDate?" }`
+- `PATCH /api/visa/:id` — `{ "done?", "startDate?", "dueDate?" }`
 - `DELETE /api/visa/:id`
+- `GET /api/visa/schedule` — `{ days, times }`
+- `PUT /api/visa/schedule` — `{ "days": [1,2,3,4,5], "times": ["09:00","18:00"] }`
 - `GET /api/health`
 
 ## Scripts

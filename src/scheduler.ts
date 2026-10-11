@@ -2,55 +2,39 @@ import { formatInTimeZone } from "date-fns-tz";
 import { config } from "./config.js";
 import {
   getDueReminders,
-  listUnfinishedVisaDocuments,
+  getVisaDigestSchedule,
   markReminderFailed,
   markReminderSent,
   markVisaDigestSent,
   wasVisaDigestSent,
-  type VisaDocument,
 } from "./db.js";
-import { sendReminder, sendTextMessage } from "./telegram/bot.js";
+import { sendReminder } from "./telegram/bot.js";
+import {
+  listActiveVisaDocuments,
+  sendVisaDigestNow,
+  todayKeyInTz,
+} from "./visa-digest.js";
 
 const INTERVAL_MS = 60_000;
 let running = false;
 
-function formatVisaDueLabel(dueDate: string): string {
-  return new Date(`${dueDate}T12:00:00`).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+/** ISO weekday 1–7 (Mon–Sun) → JS weekday 0–6 (Sun–Sat). */
+function localWeekdaySun0(now: Date): number {
+  const isoDay = Number(formatInTimeZone(now, config.tz, "i"));
+  return isoDay % 7;
 }
 
-function formatVisaDueLine(doc: VisaDocument, todayKey: string): string {
-  if (!doc.due_date) {
-    return `• ${doc.title}`;
-  }
-
-  const dueLabel = formatVisaDueLabel(doc.due_date);
-
-  if (doc.due_date < todayKey) {
-    return `• ${doc.title} — overdue (was ${dueLabel})`;
-  }
-  if (doc.due_date === todayKey) {
-    return `• ${doc.title} — due today`;
-  }
-  return `• ${doc.title} — due ${dueLabel}`;
-}
-
-function buildVisaDigestMessage(
-  docs: VisaDocument[],
-  todayKey: string
-): string {
-  const lines = docs.map((d) => formatVisaDueLine(d, todayKey));
-  return `Visa prep — ${docs.length} open\n${lines.join("\n")}`;
-}
-
-async function maybeSendVisaDigest(chatId: string): Promise<void> {
+async function maybeSendVisaDigest(): Promise<void> {
   const now = new Date();
   const localHm = formatInTimeZone(now, config.tz, "HH:mm");
-  const todayKey = formatInTimeZone(now, config.tz, "yyyy-MM-dd");
+  const todayKey = todayKeyInTz(now);
+  const weekday = localWeekdaySun0(now);
+  const schedule = getVisaDigestSchedule();
 
-  if (!config.visaDigestTimes.includes(localHm)) {
+  if (!schedule.days.includes(weekday)) {
+    return;
+  }
+  if (!schedule.times.includes(localHm)) {
     return;
   }
 
@@ -59,14 +43,7 @@ async function maybeSendVisaDigest(chatId: string): Promise<void> {
     return;
   }
 
-  const unfinished = listUnfinishedVisaDocuments();
-  const active = unfinished.filter(
-    (d) =>
-      d.start_date &&
-      d.due_date &&
-      d.start_date <= todayKey &&
-      todayKey <= d.due_date
-  );
+  const active = listActiveVisaDocuments(todayKey);
   if (active.length === 0) {
     markVisaDigestSent(digestKey);
     console.log(`Visa digest ${digestKey}: nothing active, skipped`);
@@ -74,10 +51,7 @@ async function maybeSendVisaDigest(chatId: string): Promise<void> {
   }
 
   try {
-    await sendTextMessage(
-      chatId,
-      buildVisaDigestMessage(active, todayKey)
-    );
+    await sendVisaDigestNow();
     markVisaDigestSent(digestKey);
     console.log(
       `Sent visa digest ${digestKey} (${active.length} active)`
@@ -118,7 +92,7 @@ async function tick(): Promise<void> {
       }
     }
 
-    await maybeSendVisaDigest(chatId);
+    await maybeSendVisaDigest();
   } finally {
     running = false;
   }

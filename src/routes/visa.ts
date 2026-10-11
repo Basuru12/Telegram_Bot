@@ -2,15 +2,50 @@ import { Router } from "express";
 import {
   createVisaDocument,
   deleteVisaDocument,
+  getVisaDigestSchedule,
   getVisaDocumentById,
   listVisaDocuments,
+  setVisaDigestSchedule,
   setVisaDocumentDone,
   updateVisaDocumentDates,
 } from "../db.js";
+import { sendVisaDigestNow } from "../visa-digest.js";
 
 export const visaRouter = Router();
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+visaRouter.get("/schedule", (_req, res) => {
+  res.json(getVisaDigestSchedule());
+});
+
+visaRouter.put("/schedule", (req, res) => {
+  const days = req.body?.days;
+  const times = req.body?.times;
+
+  if (!Array.isArray(days) || !Array.isArray(times)) {
+    res.status(400).json({ error: "days and times arrays are required" });
+    return;
+  }
+
+  try {
+    const schedule = setVisaDigestSchedule({ days, times });
+    res.json(schedule);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(400).json({ error: message });
+  }
+});
+
+visaRouter.post("/schedule/test", async (_req, res) => {
+  try {
+    const result = await sendVisaDigestNow({ test: true });
+    res.json(result);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(503).json({ error: message });
+  }
+});
 
 function parseDateField(
   raw: unknown,

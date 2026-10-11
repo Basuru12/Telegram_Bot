@@ -63,6 +63,44 @@
         <p id="empty" class="empty" hidden>No documents yet.</p>
       </section>
 
+      <section class="schedule">
+        <div class="list-header">
+          <h2>Reminders</h2>
+        </div>
+        <p class="plan-hint">
+          Choose weekdays and times (in your app timezone) for Telegram digests
+          of documents active today.
+        </p>
+        <fieldset class="weekday-field">
+          <legend>Days</legend>
+          <div class="weekday-toggles" id="weekday-toggles">
+            <label><input type="checkbox" value="0" /> Sun</label>
+            <label><input type="checkbox" value="1" /> Mon</label>
+            <label><input type="checkbox" value="2" /> Tue</label>
+            <label><input type="checkbox" value="3" /> Wed</label>
+            <label><input type="checkbox" value="4" /> Thu</label>
+            <label><input type="checkbox" value="5" /> Fri</label>
+            <label><input type="checkbox" value="6" /> Sat</label>
+          </div>
+        </fieldset>
+        <div class="time-add-row">
+          <label>
+            Add time
+            <input id="schedule-time" type="time" step="60" />
+          </label>
+          <button type="button" id="add-time-btn">Add</button>
+        </div>
+        <ul id="schedule-times" class="time-chips"></ul>
+        <div class="schedule-actions">
+          <button type="button" id="save-schedule-btn">Save schedule</button>
+          <button type="button" id="test-digest-btn" class="secondary-btn">
+            Send test reminder
+          </button>
+        </div>
+        <p id="schedule-status" class="schedule-status" hidden></p>
+        <p id="schedule-error" class="error" hidden></p>
+      </section>
+
       <section class="plan">
         <div class="list-header">
           <h2>Plan</h2>

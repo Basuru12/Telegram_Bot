@@ -115,6 +115,12 @@ export function initDb(): Database.Database {
     CREATE TABLE IF NOT EXISTS visa_digest_log (
       digest_key TEXT PRIMARY KEY
     );
+
+    CREATE TABLE IF NOT EXISTS visa_digest_schedule (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      days TEXT NOT NULL,
+      times TEXT NOT NULL
+    );
   `);
 
   migrateSourceCheck(db);
@@ -355,4 +361,81 @@ export function markVisaDigestSent(digestKey: string): void {
       `INSERT OR IGNORE INTO visa_digest_log (digest_key) VALUES (?)`
     )
     .run(digestKey);
+}
+
+export interface VisaDigestSchedule {
+  days: number[];
+  times: string[];
+}
+
+const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+function defaultVisaDigestSchedule(): VisaDigestSchedule {
+  return {
+    days: [0, 1, 2, 3, 4, 5, 6],
+    times: [...config.visaDigestTimes],
+  };
+}
+
+function normalizeSchedule(input: {
+  days: number[];
+  times: string[];
+}): VisaDigestSchedule {
+  const days = [
+    ...new Set(
+      input.days
+        .map((d) => Number(d))
+        .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+    ),
+  ].sort((a, b) => a - b);
+
+  const times = [
+    ...new Set(
+      input.times
+        .map((t) => String(t).trim())
+        .filter((t) => TIME_RE.test(t))
+    ),
+  ].sort();
+
+  if (days.length === 0) {
+    throw new Error("At least one weekday is required");
+  }
+  if (times.length === 0) {
+    throw new Error("At least one time (HH:mm) is required");
+  }
+
+  return { days, times };
+}
+
+export function getVisaDigestSchedule(): VisaDigestSchedule {
+  const row = getDb()
+    .prepare(`SELECT days, times FROM visa_digest_schedule WHERE id = 1`)
+    .get() as { days: string; times: string } | undefined;
+
+  if (!row) {
+    return defaultVisaDigestSchedule();
+  }
+
+  try {
+    const days = JSON.parse(row.days) as number[];
+    const times = JSON.parse(row.times) as string[];
+    return normalizeSchedule({ days, times });
+  } catch {
+    return defaultVisaDigestSchedule();
+  }
+}
+
+export function setVisaDigestSchedule(input: {
+  days: number[];
+  times: string[];
+}): VisaDigestSchedule {
+  const schedule = normalizeSchedule(input);
+  getDb()
+    .prepare(
+      `INSERT INTO visa_digest_schedule (id, days, times)
+       VALUES (1, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET days = excluded.days, times = excluded.times`
+    )
+    .run(JSON.stringify(schedule.days), JSON.stringify(schedule.times));
+  return schedule;
 }
