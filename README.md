@@ -8,6 +8,7 @@ Personal reminder assistant that talks over **Telegram** (Bot API via grammY lon
 - Same actions via a local web UI at `http://localhost:3000`
 - Temporary **visa checklist** at `http://localhost:3000/visa.html` (manual checkboxes)
 - Telegram digests for **active** visa docs; weekdays + times set on `/visa.html`
+- Optional email copy of the same digest via SMTP (`VISA_DIGEST_EMAIL`)
 - Background scheduler (every 60s) sends due reminders and visa digests
 - Single-user allowlist via `ALLOWED_TELEGRAM_CHAT_ID`
 
@@ -31,6 +32,12 @@ Open http://localhost:3000 — the web UI works even before Telegram is configur
 | `TELEGRAM_BOT_TOKEN` | for Telegram | Token from [@BotFather](https://t.me/BotFather) |
 | `ALLOWED_TELEGRAM_CHAT_ID` | for delivery | Your numeric Telegram chat id |
 | `VISA_DIGEST_TIMES` | no | Bootstrap `HH:mm` list until schedule is saved in the UI; default `09:00` |
+| `VISA_DIGEST_EMAIL` | no | If set (with SMTP), digests are also emailed |
+| `SMTP_HOST` | for email | e.g. `smtp.gmail.com` |
+| `SMTP_PORT` | no | Default `587` (`465` uses TLS) |
+| `SMTP_USER` | for email | SMTP username |
+| `SMTP_PASS` | for email | SMTP password / app password |
+| `SMTP_FROM` | no | From address; defaults to `SMTP_USER` |
 
 ## Telegram setup
 
@@ -56,6 +63,8 @@ No public webhook or tunnel is required — the bot uses long polling.
 ## Visa checklist
 
 Open `/visa.html` to add documents, set start/due dates on the Gantt, and check them off. Use the **Reminders** section to pick weekdays and times for Telegram digests. Digests only include unfinished docs whose window includes today. Until you save a schedule in the UI, times default from `VISA_DIGEST_TIMES` (all days). The app must be running at those times.
+
+If `VISA_DIGEST_EMAIL` and SMTP settings are configured, the same digest text is also emailed (scheduled and **Send test reminder**). Email failures are logged and do not block Telegram delivery.
 
 ## API
 

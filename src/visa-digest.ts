@@ -1,6 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz";
-import { config } from "./config.js";
+import { config, isEmailConfigured } from "./config.js";
 import { listUnfinishedVisaDocuments, type VisaDocument } from "./db.js";
+import { sendEmail } from "./email.js";
 import { sendTextMessage } from "./telegram/bot.js";
 
 function formatVisaDueLabel(dueDate: string): string {
@@ -68,5 +69,18 @@ export async function sendVisaDigestNow(options?: {
   const text = options?.test ? `[Test]\n${body}` : body;
 
   await sendTextMessage(chatId, text);
+
+  if (isEmailConfigured()) {
+    try {
+      await sendEmail({
+        subject: options?.test ? "[Test] Visa prep digest" : "Visa prep digest",
+        text,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("Failed sending visa digest email:", message);
+    }
+  }
+
   return { sent: true, count: active.length, text };
 }

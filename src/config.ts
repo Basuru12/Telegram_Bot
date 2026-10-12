@@ -37,6 +37,8 @@ function parseVisaDigestTimes(): string[] {
   return times.length > 0 ? times : ["09:00"];
 }
 
+const smtpUser = optional("SMTP_USER");
+
 export const config = {
   port: Number(process.env.PORT ?? 3000),
   databasePath: process.env.DATABASE_PATH ?? "./data/reminders.db",
@@ -46,7 +48,24 @@ export const config = {
     token: optional("TELEGRAM_BOT_TOKEN"),
   },
   allowedTelegramChatId: optional("ALLOWED_TELEGRAM_CHAT_ID"),
+  visaDigestEmail: optional("VISA_DIGEST_EMAIL"),
+  smtp: {
+    host: optional("SMTP_HOST"),
+    port: Number(process.env.SMTP_PORT ?? 587),
+    user: smtpUser,
+    pass: optional("SMTP_PASS"),
+    from: optional("SMTP_FROM") ?? smtpUser,
+  },
 };
+
+export function isEmailConfigured(): boolean {
+  return Boolean(
+    config.visaDigestEmail &&
+      config.smtp.host &&
+      config.smtp.user &&
+      config.smtp.pass
+  );
+}
 
 export function assertTelegramConfigured(): { token: string } {
   return {

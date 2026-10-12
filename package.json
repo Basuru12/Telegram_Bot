@@ -10,7 +10,11 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["telegram", "reminders", "grammy"],
+  "keywords": [
+    "telegram",
+    "reminders",
+    "grammy"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -20,12 +24,14 @@
     "date-fns-tz": "^3.2.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "grammy": "^1.39.3"
+    "grammy": "^1.39.3",
+    "nodemailer": "^10.1.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
     "@types/express": "^5.0.6",
     "@types/node": "^26.5.0",
+    "@types/nodemailer": "^8.0.2",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   }
