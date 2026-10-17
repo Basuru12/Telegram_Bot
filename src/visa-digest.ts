@@ -19,7 +19,7 @@ function formatVisaDueLine(doc: VisaDocument, todayKey: string): string {
   const dueLabel = formatVisaDueLabel(doc.due_date);
 
   if (doc.due_date < todayKey) {
-    return `• ${doc.title} — overdue (was ${dueLabel})`;
+    return `🔴 • ${doc.title} — overdue (was ${dueLabel})`;
   }
   if (doc.due_date === todayKey) {
     return `• ${doc.title} — due today`;
@@ -36,8 +36,7 @@ export function listActiveVisaDocuments(todayKey = todayKeyInTz()): VisaDocument
     (d) =>
       d.start_date &&
       d.due_date &&
-      d.start_date <= todayKey &&
-      todayKey <= d.due_date
+      d.start_date <= todayKey
   );
 }
 

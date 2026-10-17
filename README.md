@@ -62,7 +62,7 @@ No public webhook or tunnel is required — the bot uses long polling.
 
 ## Visa checklist
 
-Open `/visa.html` to add documents, set start/due dates on the Gantt, and check them off. Use the **Reminders** section to pick weekdays and times for Telegram digests. Digests only include unfinished docs whose window includes today. Until you save a schedule in the UI, times default from `VISA_DIGEST_TIMES` (all days). The app must be running at those times.
+Open `/visa.html` to add documents, set start/due dates on the Gantt, and check them off. Use the **Reminders** section to pick weekdays and times for Telegram digests. Digests include unfinished docs that have started (start date ≤ today), including overdue ones marked with a red circle emoji. Until you save a schedule in the UI, times default from `VISA_DIGEST_TIMES` (all days). The app must be running at those times.
 
 If `VISA_DIGEST_EMAIL` and SMTP settings are configured, the same digest text is also emailed (scheduled and **Send test reminder**). Email failures are logged and do not block Telegram delivery.
 
